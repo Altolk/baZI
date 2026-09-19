@@ -87,7 +87,6 @@ tr.hour-row.nayin-water td:first-child{border-left:4px solid #5dade2}
 .sort-btn.clear{background:transparent;border-color:#889;color:#889;font-size:.9em}
 .sort-btn.clear:hover{background:#2a2a4a;border-color:#c0392b;color:#ff6b5b}
 
-/* ============ ПАНЕЛЬ АНАЛИЗА НА ИНЬ ============ */
 .analysis-panel{
   background:#0f3460;padding:14px;border-radius:8px;margin-bottom:16px;
   display:flex;flex-wrap:wrap;gap:10px;align-items:center;
@@ -191,6 +190,8 @@ var NAYIN_WX=[
 ];
 var BRANCH_RU=['Крыса','Бык','Тигр','Кролик','Дракон','Змея','Лошадь','Коза','Обезьяна','Петух','Собака','Свинья'];
 var STEM_RU=['Цзя','И','Бин','Дин','У','Цзи','Гэн','Синь','Жэнь','Гуй'];
+var WX_RU={wood:'Дерево', fire:'Огонь', earth:'Земля', metal:'Металл', water:'Вода'};
+var WX_KE={metal:'wood', wood:'earth', earth:'water', water:'fire', fire:'metal'};
 
 function gz(n){n=((n%60)+60)%60;return{s:S[n%10],b:B[n%12],n:n}}
 function ci(si,bi){for(var n=0;n<60;n++){if(n%10===si&&n%12===bi)return n}return -1}
@@ -271,4 +272,157 @@ for(var i=0;i<12;i++){
 var ss=new Date(m.st.getTime()+sm*i);var se=new Date(m.st.getTime()+sm*(i+1));var g=gz(sg.n+i);
 var sr=row('seg-row hidden','i2',2,'<span class="arrow">▶</span> '+g.s+' '+g.b,period2(ss,se),g,true);
 sr.dataset.segGz=g.s+' '+g.b;
-sr.dataset.segNayin=NAYIN_RU
+sr.dataset.segNayin=NAYIN_RU[g.n];
+sr.dataset.segWx=NAYIN_WX[g.n];
+sr.dataset.monthName=m.t;
+sr.dataset.monthNayin=NAYIN_RU[mGz.n];
+sr.dataset.monthWx=NAYIN_WX[mGz.n];
+tb.appendChild(sr);
+var cur=new Date(ss);cur.setHours(0,0,0,0);
+while(cur<se){
+var dg=dgz(cur);var dd=new Date(cur);
+var dr=row('day-row hidden','i3',3,
+  '<span class="arrow">▶</span> <span class="yr">'+fdy(dd)+'</span>'+
+  '<span class="nayin-line">['+nayinRuHtml(dg)+']</span>',
+  '',
+  dg, false);
+dr.dataset.date=('0'+dd.getDate()).slice(-2)+'.'+('0'+(dd.getMonth()+1)).slice(-2)+'.'+dd.getFullYear();
+dr.dataset.dayNum=dd.getDate();
+dr.dataset.dgz=dg.n;
+dr.dataset.parentSeg=sr.dataset.segGz;
+dr.dataset.parentSegNayin=sr.dataset.segNayin;
+dr.dataset.parentMonth=m.t;
+dr.dataset.parentMonthGz=mr.dataset.monthGz;
+dr.dataset.parentMonthNayin=mr.dataset.monthNayin;
+tb.appendChild(dr);
+var hn=hs(dg.s);var hr=['23-01','01-03','03-05','05-07','07-09','09-11','11-13','13-15','15-17','17-19','19-21','21-23'];
+for(var h=0;h<12;h++){
+  var hg=gz(hn+h);
+  var hrr=row('hour-row hidden nayin-'+NAYIN_WX[hg.n],'i4',4,(h+1)+'. '+hg.s+' '+hg.b,hr[h]+'时',hg,true);
+  tb.appendChild(hrr);
+}
+cur.setDate(cur.getDate()+1);
+}}});
+function lv(r){if(r.classList.contains('year-row'))return 0;if(r.classList.contains('month-row'))return 1;if(r.classList.contains('seg-row'))return 2;if(r.classList.contains('day-row'))return 3;if(r.classList.contains('hour-row'))return 4;return -1}
+function closeCh(r){r.classList.remove('open');var n=r.nextElementSibling;var L=lv(r);while(n){if(lv(n)<=L)break;n.classList.add('hidden');n.classList.remove('open');n=n.nextElementSibling}}
+function togCh(r,cl){var L=lv(r);var n=r.nextElementSibling;while(n){if(lv(n)<=L)break;if(n.classList.contains(cl)){n.classList.toggle('hidden');if(n.classList.contains('hidden'))closeCh(n)}n=n.nextElementSibling}}
+document.addEventListener('click',function(e){var r=e.target.closest('tr');if(!r)return;var L=lv(r);if(L<0||L>3)return;r.classList.toggle('open');var cm={0:'month-row',1:'seg-row',2:'day-row',3:'hour-row'};var cl=cm[L];if(cl)togCh(r,cl)});
+function allOpen(){document.querySelectorAll('tr').forEach(function(r){r.classList.remove('hidden');r.classList.add('open')})}
+function allClose(){document.querySelectorAll('tr').forEach(function(r){var L=lv(r);if(L>0)r.classList.add('hidden');r.classList.remove('open')});document.querySelector('.year-row').classList.remove('hidden')}
+
+function clearAnalysis(){
+  var box=document.getElementById('analysisResult');
+  if(box)box.classList.remove('show');
+  document.querySelectorAll('.seg-row.seg-hit').forEach(function(sr){
+    sr.classList.remove('seg-hit');
+    var b=sr.querySelector('.tag-seg-ke');
+    if(b)b.remove();
+  });
+  resetSort();
+}
+
+function analyzeSegKe(){
+  document.querySelectorAll('.seg-row').forEach(function(sr){
+    sr.classList.remove('seg-hit');
+    var b=sr.querySelector('.tag-seg-ke');
+    if(b)b.remove();
+  });
+
+  document.querySelectorAll('tr').forEach(function(r){
+    if(r.classList.contains('year-row')){r.classList.remove('hidden');r.classList.add('open');}
+    else if(r.classList.contains('month-row')){r.classList.remove('hidden');}
+    else if(r.classList.contains('seg-row')){r.classList.remove('hidden');}
+    else{r.classList.add('hidden');r.classList.remove('open');}
+  });
+
+  var hits=[];
+  document.querySelectorAll('.seg-row').forEach(function(sr){
+    var segWx=sr.dataset.segWx;
+    var monthWx=sr.dataset.monthWx;
+    if(!segWx||!monthWx)return;
+    if(WX_KE[segWx]===monthWx){
+      sr.classList.add('seg-hit');
+      var badge=document.createElement('span');
+      badge.className='tag-link tag-seg-ke';
+      badge.textContent='⚡ '+WX_RU[segWx]+'克'+WX_RU[monthWx];
+      sr.cells[0].appendChild(badge);
+      hits.push({
+        segGz:sr.dataset.segGz,
+        segWx:segWx,
+        monthName:sr.dataset.monthName,
+        monthWx:monthWx
+      });
+    }
+  });
+
+  var box=document.getElementById('analysisResult');
+  var title=document.getElementById('analysisTitle');
+  var body=document.getElementById('analysisBody');
+  title.textContent='Отрезки, преодолевающие на инь месяца ('+hits.length+')';
+  if(!hits.length){
+    body.innerHTML='<p class="empty">Не найдено.</p>';
+  } else {
+    var html='<ul>';
+    hits.forEach(function(h){
+      html+='<li><span class="m-name">'+h.segGz+'</span> — месяц <b>'+h.monthName+'</b> <span class="m-rel">'+WX_RU[h.segWx]+'克'+WX_RU[h.monthWx]+'</span></li>';
+    });
+    html+='</ul>';
+    body.innerHTML=html;
+  }
+  box.classList.add('show');
+}
+
+var currentSort=null;
+function showOnly(cls, btn){
+  if(currentSort===cls){resetSort();return;}
+  currentSort=cls;
+  document.querySelectorAll('.sort-btn').forEach(function(b){b.classList.remove('active')});
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('tr').forEach(function(r){
+    if(r.classList.contains('year-row'))return;
+    r.classList.add('hidden');
+  });
+  document.querySelectorAll('tr.'+cls).forEach(function(r){
+    r.classList.remove('hidden');r.classList.add('open');
+  });
+  if(cls==='seg-row'||cls==='day-row'||cls==='hour-row'){
+    document.querySelectorAll('.month-row').forEach(function(r){r.classList.remove('hidden')});
+  }
+  if(cls==='day-row'||cls==='hour-row'){
+    document.querySelectorAll('.seg-row').forEach(function(r){r.classList.remove('hidden')});
+  }
+  if(cls==='hour-row'){
+    document.querySelectorAll('.day-row').forEach(function(r){r.classList.remove('hidden')});
+  }
+}
+function resetSort(){
+  currentSort=null;
+  document.querySelectorAll('.sort-btn').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('tr').forEach(function(r){
+    if(!r.classList.contains('year-row')){r.classList.add('hidden');r.classList.remove('open');}
+  });
+  var yr=document.querySelector('.year-row');
+  yr.classList.remove('hidden');yr.classList.add('open');
+}
+
+var searchInput=document.getElementById('searchInput');
+searchInput.addEventListener('input',function(e){
+  var v=this.value.replace(/[^\d]/g,'');
+  if(v.length>8)v=v.slice(0,8);
+  var out='';
+  if(v.length<=2)out=v;
+  else if(v.length<=4)out=v.slice(0,2)+'.'+v.slice(2);
+  else out=v.slice(0,2)+'.'+v.slice(2,4)+'.'+v.slice(4);
+  this.value=out;
+});
+searchInput.addEventListener('keydown',function(e){if(e.key==='Enter')searchDate()});
+function hideAll(){
+  document.querySelectorAll('tr').forEach(function(r){
+    if(!r.classList.contains('year-row')){r.classList.add('hidden');r.classList.remove('open');}
+  });
+  var yr=document.querySelector('.year-row');
+  yr.classList.remove('hidden');yr.classList.add('open');
+}
+function searchDate(){
+  resetSort();
+  var raw=searchInput.value.replace(/[^\d]/g,'');
