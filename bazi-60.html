@@ -86,6 +86,44 @@ tr.hour-row.nayin-water td:first-child{border-left:4px solid #5dade2}
 .sort-btn.active{background:#e8c547;color:#1a1a2e;border-color:#e8c547}
 .sort-btn.clear{background:transparent;border-color:#889;color:#889;font-size:.9em}
 .sort-btn.clear:hover{background:#2a2a4a;border-color:#c0392b;color:#ff6b5b}
+
+/* ============ ПАНЕЛЬ АНАЛИЗА НА ИНЬ ============ */
+.analysis-panel{
+  background:#0f3460;padding:14px;border-radius:8px;margin-bottom:16px;
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  border-left:5px solid #16a085;
+}
+.analysis-panel .title{color:#16a085;font-size:1.05em;font-weight:600;margin-right:10px}
+.analysis-btn{
+  background:#16213e;color:#16a085;border:2px solid #16a085;border-radius:6px;
+  padding:10px 16px;cursor:pointer;font-size:1em;font-weight:600;transition:all .2s;
+}
+.analysis-btn:hover{background:#16a085;color:#1a1a2e}
+.analysis-btn.clear-btn{border-color:#889;color:#889;font-size:.9em}
+.analysis-btn.clear-btn:hover{background:#2a2a4a;border-color:#c0392b;color:#ff6b5b}
+.analysis-result{
+  background:#16213e;border:1px solid #16a085;border-radius:6px;
+  padding:14px;margin-bottom:16px;display:none;
+}
+.analysis-result.show{display:block}
+.analysis-result h3{color:#16a085;margin:0 0 10px 0;font-size:1.15em}
+.analysis-result ul{margin:0;padding-left:20px;line-height:1.7}
+.analysis-result li{padding:6px 0;border-bottom:1px solid #2a2a4a}
+.analysis-result .m-name{color:#ff9f43;font-weight:700}
+.analysis-result .m-rel{
+  font-weight:700;margin-left:8px;padding:2px 8px;border-radius:8px;
+  background:#16a085;color:#fff;display:inline-block;
+}
+.analysis-result .empty{color:#889;font-style:italic}
+.seg-row.seg-hit td{
+  background:#0e3a2a !important;
+  border-left:5px solid #16a085 !important;
+}
+.tag-seg-ke{
+  background:#16a085;color:#fff;
+  border:1px solid #5fdc8f;
+  box-shadow:0 0 8px rgba(22,160,133,.8);
+}
 </style>
 </head>
 <body>
@@ -103,6 +141,7 @@ tr.hour-row.nayin-water td:first-child{border-left:4px solid #5dade2}
   <div><span class="label">Дата:</span> <span class="val" id="resDate">—</span></div>
   <div><span class="label">Столп дня:</span> <span id="resDay">—</span></div>
 </div>
+
 <div class="analysis-panel">
   <span class="title">🔍 Анализ на инь:</span>
   <button class="analysis-btn" onclick="analyzeSegKe()">Отрезок преодолевающий месяц</button>
@@ -224,6 +263,7 @@ mr.dataset.monthNum=m.n;
 mr.dataset.monthIdx=idx;
 mr.dataset.monthGz=m.s+' '+m.b;
 mr.dataset.monthNayin=NAYIN_RU[mGz.n];
+mr.dataset.monthName=m.t;
 tb.appendChild(mr);
 monthRows.push(mr);
 var tot=m.en-m.st;var sm=tot/12;var sg=gz(ms(m.s));
@@ -231,166 +271,4 @@ for(var i=0;i<12;i++){
 var ss=new Date(m.st.getTime()+sm*i);var se=new Date(m.st.getTime()+sm*(i+1));var g=gz(sg.n+i);
 var sr=row('seg-row hidden','i2',2,'<span class="arrow">▶</span> '+g.s+' '+g.b,period2(ss,se),g,true);
 sr.dataset.segGz=g.s+' '+g.b;
-sr.dataset.segNayin=NAYIN_RU[g.n];
-tb.appendChild(sr);
-var cur=new Date(ss);cur.setHours(0,0,0,0);
-while(cur<se){
-var dg=dgz(cur);var dd=new Date(cur);
-var dr=row('day-row hidden','i3',3,
-  '<span class="arrow">▶</span> <span class="yr">'+fdy(dd)+'</span>'+
-  '<span class="nayin-line">['+nayinRuHtml(dg)+']</span>',
-  '',
-  dg, false);
-dr.dataset.date=('0'+dd.getDate()).slice(-2)+'.'+('0'+(dd.getMonth()+1)).slice(-2)+'.'+dd.getFullYear();
-dr.dataset.dayNum=dd.getDate();
-dr.dataset.dgz=dg.n;
-dr.dataset.parentSeg=sr.dataset.segGz;
-dr.dataset.parentSegNayin=sr.dataset.segNayin;
-dr.dataset.parentMonth=m.t;
-dr.dataset.parentMonthGz=mr.dataset.monthGz;
-dr.dataset.parentMonthNayin=mr.dataset.monthNayin;
-tb.appendChild(dr);
-var hn=hs(dg.s);var hr=['23-01','01-03','03-05','05-07','07-09','09-11','11-13','13-15','15-17','17-19','19-21','21-23'];
-for(var h=0;h<12;h++){
-  var hg=gz(hn+h);
-  var hrr=row('hour-row hidden nayin-'+NAYIN_WX[hg.n],'i4',4,(h+1)+'. '+hg.s+' '+hg.b,hr[h]+'时',hg,true);
-  tb.appendChild(hrr);
-}
-cur.setDate(cur.getDate()+1);
-}}});
-function lv(r){if(r.classList.contains('year-row'))return 0;if(r.classList.contains('month-row'))return 1;if(r.classList.contains('seg-row'))return 2;if(r.classList.contains('day-row'))return 3;if(r.classList.contains('hour-row'))return 4;return -1}
-function closeCh(r){r.classList.remove('open');var n=r.nextElementSibling;var L=lv(r);while(n){if(lv(n)<=L)break;n.classList.add('hidden');n.classList.remove('open');n=n.nextElementSibling}}
-function togCh(r,cl){var L=lv(r);var n=r.nextElementSibling;while(n){if(lv(n)<=L)break;if(n.classList.contains(cl)){n.classList.toggle('hidden');if(n.classList.contains('hidden'))closeCh(n)}n=n.nextElementSibling}}
-document.addEventListener('click',function(e){var r=e.target.closest('tr');if(!r)return;var L=lv(r);if(L<0||L>3)return;r.classList.toggle('open');var cm={0:'month-row',1:'seg-row',2:'day-row',3:'hour-row'};var cl=cm[L];if(cl)togCh(r,cl)});
-function allOpen(){document.querySelectorAll('tr').forEach(function(r){r.classList.remove('hidden');r.classList.add('open')})}
-function allClose(){document.querySelectorAll('tr').forEach(function(r){var L=lv(r);if(L>0)r.classList.add('hidden');r.classList.remove('open')});document.querySelector('.year-row').classList.remove('hidden')}
-
-/* ============ ФИЛЬТР ============ */
-var currentSort=null;
-function showOnly(cls, btn){
-  if(currentSort===cls){resetSort();return;}
-  currentSort=cls;
-  document.querySelectorAll('.sort-btn').forEach(function(b){b.classList.remove('active')});
-  if(btn)btn.classList.add('active');
-  document.querySelectorAll('tr').forEach(function(r){
-    if(r.classList.contains('year-row'))return;
-    r.classList.add('hidden');
-  });
-  document.querySelectorAll('tr.'+cls).forEach(function(r){
-    r.classList.remove('hidden');r.classList.add('open');
-  });
-  if(cls==='seg-row'||cls==='day-row'||cls==='hour-row'){
-    document.querySelectorAll('.month-row').forEach(function(r){r.classList.remove('hidden')});
-  }
-  if(cls==='day-row'||cls==='hour-row'){
-    document.querySelectorAll('.seg-row').forEach(function(r){r.classList.remove('hidden')});
-  }
-  if(cls==='hour-row'){
-    document.querySelectorAll('.day-row').forEach(function(r){r.classList.remove('hidden')});
-  }
-}
-function resetSort(){
-  currentSort=null;
-  document.querySelectorAll('.sort-btn').forEach(function(b){b.classList.remove('active')});
-  document.querySelectorAll('tr').forEach(function(r){
-    if(!r.classList.contains('year-row')){r.classList.add('hidden');r.classList.remove('open');}
-  });
-  var yr=document.querySelector('.year-row');
-  yr.classList.remove('hidden');yr.classList.add('open');
-}
-
-/* ============ ПОИСК ============ */
-var searchInput=document.getElementById('searchInput');
-searchInput.addEventListener('input',function(e){
-  var v=this.value.replace(/[^\d]/g,'');
-  if(v.length>8)v=v.slice(0,8);
-  var out='';
-  if(v.length<=2)out=v;
-  else if(v.length<=4)out=v.slice(0,2)+'.'+v.slice(2);
-  else out=v.slice(0,2)+'.'+v.slice(2,4)+'.'+v.slice(4);
-  this.value=out;
-});
-searchInput.addEventListener('keydown',function(e){if(e.key==='Enter')searchDate()});
-function hideAll(){
-  document.querySelectorAll('tr').forEach(function(r){
-    if(!r.classList.contains('year-row')){r.classList.add('hidden');r.classList.remove('open');}
-  });
-  var yr=document.querySelector('.year-row');
-  yr.classList.remove('hidden');yr.classList.add('open');
-}
-function searchDate(){
-  resetSort();
-  var raw=searchInput.value.replace(/[^\d]/g,'');
-  var box=document.getElementById('resultBox');
-  if(raw.length!==8){
-    box.classList.add('show');
-    document.getElementById('resDate').textContent='Введите полную дату ДД.ММ.ГГГГ';
-    document.getElementById('resDay').textContent='';
-    return;
-  }
-  var dd=parseInt(raw.slice(0,2),10);
-  var mm=parseInt(raw.slice(2,4),10);
-  var yyyy=parseInt(raw.slice(4,8),10);
-  if(dd<1||dd>31||mm<1||mm>12||yyyy<1900||yyyy>2100){
-    box.classList.add('show');
-    document.getElementById('resDate').textContent='Некорректная дата';
-    document.getElementById('resDay').textContent='';
-    return;
-  }
-  var target=('0'+dd).slice(-2)+'.'+('0'+mm).slice(-2)+'.'+yyyy;
-  hideAll();
-  var mi=(MONTH_TO_GZ[mm]!==undefined)?MONTH_TO_GZ[mm]:-1;
-  if(mi<0){
-    box.classList.add('show');
-    document.getElementById('resDate').textContent='Месяц '+mm+' не найден';
-    document.getElementById('resDay').textContent='';
-    return;
-  }
-  var targetMonth=monthRows[mi];
-  targetMonth.classList.remove('hidden');
-  targetMonth.classList.add('open');
-  var found=null;
-  document.querySelectorAll('.day-row').forEach(function(r){
-    if(r.dataset.date===target)found=r;
-  });
-  if(!found){
-    var d=new Date(yyyy,mm-1,dd,12,0,0);
-    var g=dgz(d);
-    box.classList.add('show');
-    document.getElementById('resDate').textContent=target+' (вне 2026 года Бин У)';
-    document.getElementById('resDay').innerHTML='<span class="stem">'+g.s+'</span> <span class="branch">'+g.b+'</span> <span class="nayin-val">['+nayinRuHtml(g)+']</span>';
-    return;
-  }
-  var parentSeg=found.previousElementSibling;
-  while(parentSeg&&!parentSeg.classList.contains('seg-row'))parentSeg=parentSeg.previousElementSibling;
-  if(parentSeg){parentSeg.classList.remove('hidden');parentSeg.classList.add('open');}
-  found.classList.remove('hidden');
-  found.classList.add('open');
-  var dayCell=found.cells[0];
-  var oldCtx=dayCell.querySelector('.ctx');
-  if(oldCtx)oldCtx.remove();
-  var ctx=document.createElement('span');
-  ctx.className='ctx';
-  ctx.innerHTML=
-    '<span class="ctx-item"><span class="ctx-label">Отрезок:</span> <span class="ctx-value">'+found.dataset.parentSeg+'</span> <span class="nayin-line" style="display:inline;margin-left:4px">['+found.dataset.parentSegNayin+']</span></span>'+
-    '<span class="ctx-item"><span class="ctx-label">Месяц:</span> <span class="ctx-value">'+found.dataset.parentMonth+' ('+found.dataset.parentMonthGz+')</span> <span class="nayin-line" style="display:inline;margin-left:4px">['+found.dataset.parentMonthNayin+']</span></span>';
-  dayCell.appendChild(ctx);
-  var hh=found.nextElementSibling;
-  while(hh&&lv(hh)===4){hh.classList.remove('hidden');hh=hh.nextElementSibling;}
-  found.classList.add('highlight');
-  setTimeout(function(){found.classList.remove('highlight')},2000);
-  var dg=gz(parseInt(found.dataset.dgz,10));
-  box.classList.add('show');
-  document.getElementById('resDate').textContent=target;
-  document.getElementById('resDay').innerHTML='<span class="stem">'+dg.s+'</span> <span class="branch">'+dg.b+'</span> <span class="nayin-val">['+nayinRuHtml(dg)+']</span>';
-  setTimeout(function(){found.scrollIntoView({behavior:'smooth',block:'center'})},100);
-}
-function clearSearch(){
-  searchInput.value='';
-  document.getElementById('resultBox').classList.remove('show');
-  resetSort();
-  searchInput.focus();
-}
-</script>
-</body>
-</html>
+sr.dataset.segNayin=NAYIN_RU
