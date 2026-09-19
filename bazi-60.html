@@ -426,3 +426,69 @@ function hideAll(){
 function searchDate(){
   resetSort();
   var raw=searchInput.value.replace(/[^\d]/g,'');
+var dd=parseInt(raw.slice(0,2),10);
+  var mm=parseInt(raw.slice(2,4),10);
+  var yyyy=parseInt(raw.slice(4,8),10);
+  if(dd<1||dd>31||mm<1||mm>12||yyyy<1900||yyyy>2100){
+    box.classList.add('show');
+    document.getElementById('resDate').textContent='Некорректная дата';
+    document.getElementById('resDay').textContent='';
+    return;
+  }
+  var target=('0'+dd).slice(-2)+'.'+('0'+mm).slice(-2)+'.'+yyyy;
+  hideAll();
+  var mi=(MONTH_TO_GZ[mm]!==undefined)?MONTH_TO_GZ[mm]:-1;
+  if(mi<0){
+    box.classList.add('show');
+    document.getElementById('resDate').textContent='Месяц '+mm+' не найден';
+    document.getElementById('resDay').textContent='';
+    return;
+  }
+  var targetMonth=monthRows[mi];
+  targetMonth.classList.remove('hidden');
+  targetMonth.classList.add('open');
+  var found=null;
+  document.querySelectorAll('.day-row').forEach(function(r){
+    if(r.dataset.date===target)found=r;
+  });
+  if(!found){
+    var d=new Date(yyyy,mm-1,dd,12,0,0);
+    var g=dgz(d);
+    box.classList.add('show');
+    document.getElementById('resDate').textContent=target+' (вне 2026 года Бин У)';
+    document.getElementById('resDay').innerHTML='<span class="stem">'+g.s+'</span> <span class="branch">'+g.b+'</span> <span class="nayin-val">['+nayinRuHtml(g)+']</span>';
+    return;
+  }
+  var parentSeg=found.previousElementSibling;
+  while(parentSeg&&!parentSeg.classList.contains('seg-row'))parentSeg=parentSeg.previousElementSibling;
+  if(parentSeg){parentSeg.classList.remove('hidden');parentSeg.classList.add('open');}
+  found.classList.remove('hidden');
+  found.classList.add('open');
+  var dayCell=found.cells[0];
+  var oldCtx=dayCell.querySelector('.ctx');
+  if(oldCtx)oldCtx.remove();
+  var ctx=document.createElement('span');
+  ctx.className='ctx';
+  ctx.innerHTML=
+    '<span class="ctx-item"><span class="ctx-label">Отрезок:</span> <span class="ctx-value">'+found.dataset.parentSeg+'</span> <span class="nayin-line" style="display:inline;margin-left:4px">['+found.dataset.parentSegNayin+']</span></span>'+
+    '<span class="ctx-item"><span class="ctx-label">Месяц:</span> <span class="ctx-value">'+found.dataset.parentMonth+' ('+found.dataset.parentMonthGz+')</span> <span class="nayin-line" style="display:inline;margin-left:4px">['+found.dataset.parentMonthNayin+']</span></span>';
+  dayCell.appendChild(ctx);
+  var hh=found.nextElementSibling;
+  while(hh&&lv(hh)===4){hh.classList.remove('hidden');hh=hh.nextElementSibling;}
+  found.classList.add('highlight');
+  setTimeout(function(){found.classList.remove('highlight')},2000);
+  var dg=gz(parseInt(found.dataset.dgz,10));
+  box.classList.add('show');
+  document.getElementById('resDate').textContent=target;
+  document.getElementById('resDay').innerHTML='<span class="stem">'+dg.s+'</span> <span class="branch">'+dg.b+'</span> <span class="nayin-val">['+nayinRuHtml(dg)+']</span>';
+  setTimeout(function(){found.scrollIntoView({behavior:'smooth',block:'center'})},100);
+}
+function clearSearch(){
+  searchInput.value='';
+  document.getElementById('resultBox').classList.remove('show');
+  resetSort();
+  searchInput.focus();
+}
+</script>
+</body>
+</html>
